@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "sensorRetentionMinutes": 5,
+  "lastMessageAt": "2026-06-13T12:34:55.000Z",
+  "lastInsertId": 42,
+  "lastRelayCommand": {
+    "command": "ON",
+    "sent_at": "2026-06-13T12:34:10.000Z"
+  },
+  "lastDeviceStatus": {
+    "id": 9,
+    "status": "online",
+    "ip_address": "172.18.0.5",
+    "updated_at": "2026-06-13T12:34:40.000Z"
+  }
+}

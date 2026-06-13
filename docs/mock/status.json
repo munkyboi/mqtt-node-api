@@ -1,0 +1,15 @@
+{
+  "data": {
+    "id": 9,
+    "status": "online",
+    "ip_address": "172.18.0.5",
+    "updated_at": "2026-06-13T12:34:40.000Z",
+    "created_at": "2026-06-13T12:34:41.000Z"
+  },
+  "lastDeviceStatus": {
+    "id": 9,
+    "status": "online",
+    "ip_address": "172.18.0.5",
+    "updated_at": "2026-06-13T12:34:40.000Z"
+  }
+}

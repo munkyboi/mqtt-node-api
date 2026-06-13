@@ -91,6 +91,7 @@ If this app runs inside the same Docker Compose network, use the service names i
 
 - `config/` runtime configuration
 - `db/` database bootstrap and pool access
+- `docs/mock/` mock API responses
 - `repositories/` MySQL query layer
 - `services/` MQTT parsing and business logic
 - `routes/` Express route definitions

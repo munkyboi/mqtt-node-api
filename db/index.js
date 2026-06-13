@@ -3,6 +3,87 @@ const { MYSQL_CONFIG } = require('../config/env');
 
 let pool;
 
+async function columnExists(tableName, columnName) {
+  const [rows] = await pool.query(
+    `SELECT 1
+     FROM information_schema.columns
+     WHERE table_schema = ?
+       AND table_name = ?
+       AND column_name = ?
+     LIMIT 1`,
+    [MYSQL_CONFIG.database, tableName, columnName],
+  );
+
+  return rows.length > 0;
+}
+
+async function indexExists(tableName, indexName) {
+  const [rows] = await pool.query(
+    `SELECT 1
+     FROM information_schema.statistics
+     WHERE table_schema = ?
+       AND table_name = ?
+       AND index_name = ?
+     LIMIT 1`,
+    [MYSQL_CONFIG.database, tableName, indexName],
+  );
+
+  return rows.length > 0;
+}
+
+async function ensureSensorReadingColumns() {
+  if (!(await columnExists('sensor_readings', 'recorded_at'))) {
+    await pool.query(
+      `ALTER TABLE sensor_readings
+       ADD COLUMN recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    );
+  }
+
+  if (await columnExists('sensor_readings', 'reading_at')) {
+    await pool.query(
+      `UPDATE sensor_readings
+       SET recorded_at = reading_at
+       WHERE recorded_at IS NULL OR recorded_at = '1970-01-01 00:00:00'`,
+    );
+    await pool.query(`ALTER TABLE sensor_readings DROP COLUMN reading_at`);
+  }
+
+  for (const columnName of ['topic', 'device_id', 'raw_payload']) {
+    if (await columnExists('sensor_readings', columnName)) {
+      await pool.query(`ALTER TABLE sensor_readings DROP COLUMN ${columnName}`);
+    }
+  }
+
+  for (const indexName of [
+    'idx_sensor_readings_topic',
+    'idx_sensor_readings_device_id',
+    'idx_sensor_readings_reading_at',
+  ]) {
+    if (await indexExists('sensor_readings', indexName)) {
+      await pool.query(`ALTER TABLE sensor_readings DROP INDEX ${indexName}`);
+    }
+  }
+
+  if (!(await indexExists('sensor_readings', 'idx_sensor_readings_recorded_at'))) {
+    await pool.query(
+      `ALTER TABLE sensor_readings
+       ADD INDEX idx_sensor_readings_recorded_at (recorded_at)`,
+    );
+  }
+}
+
+async function ensureDeviceStatusColumns() {
+  for (const columnName of ['topic', 'device_id', 'raw_payload']) {
+    if (await columnExists('device_status_events', columnName)) {
+      await pool.query(`ALTER TABLE device_status_events DROP COLUMN ${columnName}`);
+    }
+  }
+
+  if (await indexExists('device_status_events', 'idx_device_status_device_id')) {
+    await pool.query(`ALTER TABLE device_status_events DROP INDEX idx_device_status_device_id`);
+  }
+}
+
 async function ensureDatabase() {
   const bootstrapConnection = await mysql.createConnection({
     host: MYSQL_CONFIG.host,
@@ -44,21 +125,8 @@ async function ensureDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
-  await pool.query(`
-    ALTER TABLE sensor_readings
-      ADD COLUMN IF NOT EXISTS recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      DROP COLUMN IF EXISTS topic,
-      DROP COLUMN IF EXISTS device_id,
-      DROP COLUMN IF EXISTS raw_payload,
-      DROP COLUMN IF EXISTS reading_at
-  `);
-
-  await pool.query(`
-    ALTER TABLE device_status_events
-      DROP COLUMN IF EXISTS topic,
-      DROP COLUMN IF EXISTS device_id,
-      DROP COLUMN IF EXISTS raw_payload
-  `);
+  await ensureSensorReadingColumns();
+  await ensureDeviceStatusColumns();
 }
 
 function getPool() {
