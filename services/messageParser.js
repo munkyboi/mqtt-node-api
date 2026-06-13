@@ -40,41 +40,34 @@ function normalizeDate(value) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-function extractReading(payload, topic, rawPayload) {
+function extractReading(payload) {
   return {
-    topic: normalizeTopic(topic),
-    raw_payload: rawPayload,
-    device_id: payload.device_id || payload.deviceId || payload.sensor_id || payload.sensorId || null,
     temperature: safeNumber(payload.temperature ?? payload.temp),
     humidity: safeNumber(payload.humidity),
     water_level: safeNumber(
       payload.water_level ?? payload.waterLevel ?? payload.level ?? payload.distance,
     ),
     status: payload.status || null,
-    reading_at: normalizeDate(payload.timestamp || payload.reading_at || payload.readingAt || null),
+    recorded_at: normalizeDate(
+      payload.timestamp || payload.recorded_at || payload.recordedAt || payload.reading_at || payload.readingAt || null,
+    ),
   };
 }
 
-function extractStatus(payload, topic, rawPayload) {
+function extractStatus(payload, rawPayload) {
   return {
-    topic: normalizeTopic(topic),
-    raw_payload: rawPayload,
-    device_id: payload.device_id || payload.deviceId || payload.sensor_id || payload.sensorId || null,
     status: payload.status || payload.state || rawPayload,
     ip_address: payload.ip_address || payload.ipAddress || null,
     updated_at: normalizeDate(payload.timestamp || payload.updated_at || payload.updatedAt || null),
   };
 }
 
-function extractRelayCommand(payload, topic, rawPayload) {
+function extractRelayCommand(payload, rawPayload) {
   const command = payload.command || payload.state || payload.relay || rawPayload;
   const normalized = String(command).trim().toUpperCase();
 
   return {
-    topic: normalizeTopic(topic),
-    raw_payload: rawPayload,
     command: normalized === '1' ? 'ON' : normalized === '0' ? 'OFF' : normalized,
-    device_id: payload.device_id || payload.deviceId || null,
     sent_at: normalizeDate(payload.timestamp || payload.sent_at || payload.sentAt || null),
   };
 }
@@ -94,18 +87,18 @@ function parseMessage(topic, messageBuffer) {
   }
 
   if (isTopic(topic, TOPIC_NAMES.sensors)) {
-    return { kind: 'sensor', data: extractReading(payload, topic, rawPayload) };
+    return { kind: 'sensor', data: extractReading(payload) };
   }
 
   if (isTopic(topic, TOPIC_NAMES.status)) {
-    return { kind: 'status', data: extractStatus(payload, topic, rawPayload) };
+    return { kind: 'status', data: extractStatus(payload, rawPayload) };
   }
 
   if (isTopic(topic, TOPIC_NAMES.relay)) {
-    return { kind: 'relay', data: extractRelayCommand(payload, topic, rawPayload) };
+    return { kind: 'relay', data: extractRelayCommand(payload, rawPayload) };
   }
 
-  return { kind: 'unknown', data: { topic: normalizeTopic(topic), raw_payload: rawPayload } };
+  return { kind: 'unknown', data: { topic: normalizeTopic(topic) } };
 }
 
 module.exports = {

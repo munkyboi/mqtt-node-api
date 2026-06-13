@@ -1,26 +1,20 @@
 const { getPool } = require('../db');
 
-async function insertSensorReading(reading, rawPayload) {
+async function insertSensorReading(reading) {
   const [result] = await getPool().query(
     `INSERT INTO sensor_readings (
-      topic,
-      device_id,
       temperature,
       humidity,
       water_level,
       status,
-      raw_payload,
-      reading_at
-    ) VALUES (?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?)`,
+      recorded_at
+    ) VALUES (?, ?, ?, ?, ?)`,
     [
-      reading.topic,
-      reading.device_id,
       reading.temperature,
       reading.humidity,
       reading.water_level,
       reading.status,
-      rawPayload,
-      reading.reading_at,
+      reading.recorded_at,
     ],
   );
 
@@ -30,17 +24,17 @@ async function insertSensorReading(reading, rawPayload) {
 async function deleteExpiredSensorReadings(retentionMinutes) {
   await getPool().query(
     `DELETE FROM sensor_readings
-     WHERE reading_at < (UTC_TIMESTAMP() - INTERVAL ? MINUTE)`,
+     WHERE recorded_at < (UTC_TIMESTAMP() - INTERVAL ? MINUTE)`,
     [retentionMinutes],
   );
 }
 
 async function getRecentSensorReadings(retentionMinutes) {
   const [rows] = await getPool().query(
-    `SELECT id, topic, device_id, temperature, humidity, water_level, status, reading_at, created_at
+    `SELECT id, temperature, humidity, water_level, status, recorded_at, created_at
      FROM sensor_readings
-     WHERE reading_at >= (UTC_TIMESTAMP() - INTERVAL ? MINUTE)
-     ORDER BY reading_at DESC`,
+     WHERE recorded_at >= (UTC_TIMESTAMP() - INTERVAL ? MINUTE)
+     ORDER BY recorded_at DESC`,
     [retentionMinutes],
   );
 

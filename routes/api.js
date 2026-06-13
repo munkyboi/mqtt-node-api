@@ -14,7 +14,6 @@ router.get('/health', async (_req, res) => {
 
     res.json({
       status: 'ok',
-      mqttTopics: MQTT_TOPICS,
       sensorRetentionMinutes: SENSOR_RETENTION_MINUTES,
       lastMessageAt: currentState.lastMessageAt,
       lastInsertId: currentState.lastInsertId,

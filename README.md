@@ -14,12 +14,11 @@ For `IoT /sensors`:
 
 ```json
 {
-  "device_id": "tank-01",
   "temperature": 28.4,
   "humidity": 73.2,
   "water_level": 45,
   "status": "ok",
-  "timestamp": "2026-06-13T12:30:00Z"
+  "recorded_at": "2026-06-13T12:30:00Z"
 }
 ```
 
@@ -27,7 +26,6 @@ For `IoT /status`:
 
 ```json
 {
-  "device_id": "tank-01",
   "status": "online",
   "ip_address": "172.18.0.5",
   "timestamp": "2026-06-13T12:30:00Z"
@@ -37,7 +35,7 @@ For `IoT /status`:
 The service also accepts simple key-value payloads such as:
 
 ```txt
-temperature=28.4,humidity=73.2,water_level=45,device_id=tank-01
+temperature=28.4,humidity=73.2,water_level=45
 ```
 
 ## MySQL tables

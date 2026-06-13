@@ -24,10 +24,7 @@ function publishRelayCommand(command) {
 
   client.publish(TOPIC_NAMES.relay, normalized);
   recordRelayCommand({
-    topic: TOPIC_NAMES.relay,
-    raw_payload: normalized,
     command: normalized,
-    device_id: null,
     sent_at: new Date(),
   });
 }

@@ -21,36 +21,43 @@ async function ensureDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS sensor_readings (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-      topic VARCHAR(255) NOT NULL,
-      device_id VARCHAR(100) NULL,
       temperature DECIMAL(10, 2) NULL,
       humidity DECIMAL(10, 2) NULL,
       water_level DECIMAL(10, 2) NULL,
       status VARCHAR(100) NULL,
-      raw_payload JSON NULL,
-      reading_at DATETIME NOT NULL,
+      recorded_at DATETIME NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
-      KEY idx_sensor_readings_topic (topic),
-      KEY idx_sensor_readings_device_id (device_id),
-      KEY idx_sensor_readings_reading_at (reading_at)
+      KEY idx_sensor_readings_recorded_at (recorded_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS device_status_events (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-      topic VARCHAR(255) NOT NULL,
-      device_id VARCHAR(100) NULL,
       status VARCHAR(100) NOT NULL,
       ip_address VARCHAR(64) NULL,
-      raw_payload JSON NULL,
       updated_at DATETIME NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
-      KEY idx_device_status_device_id (device_id),
       KEY idx_device_status_updated_at (updated_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.query(`
+    ALTER TABLE sensor_readings
+      ADD COLUMN IF NOT EXISTS recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      DROP COLUMN IF EXISTS topic,
+      DROP COLUMN IF EXISTS device_id,
+      DROP COLUMN IF EXISTS raw_payload,
+      DROP COLUMN IF EXISTS reading_at
+  `);
+
+  await pool.query(`
+    ALTER TABLE device_status_events
+      DROP COLUMN IF EXISTS topic,
+      DROP COLUMN IF EXISTS device_id,
+      DROP COLUMN IF EXISTS raw_payload
   `);
 }
 

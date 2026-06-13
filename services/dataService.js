@@ -3,16 +3,8 @@ const sensorRepository = require('../repositories/sensorRepository');
 const statusRepository = require('../repositories/statusRepository');
 const state = require('./state');
 
-function toJsonValue(rawPayload) {
-  try {
-    return JSON.stringify(JSON.parse(rawPayload));
-  } catch {
-    return JSON.stringify({ raw: rawPayload });
-  }
-}
-
 async function saveReading(reading) {
-  const insertId = await sensorRepository.insertSensorReading(reading, toJsonValue(reading.raw_payload));
+  const insertId = await sensorRepository.insertSensorReading(reading);
 
   state.markLastMessageAt();
   state.setLastInsertId(insertId);
@@ -21,17 +13,15 @@ async function saveReading(reading) {
 
   console.log('Stored reading', {
     id: insertId,
-    topic: reading.topic,
-    device_id: reading.device_id,
     temperature: reading.temperature,
     humidity: reading.humidity,
     water_level: reading.water_level,
-    reading_at: reading.reading_at.toISOString(),
+    recorded_at: reading.recorded_at.toISOString(),
   });
 }
 
 async function saveStatus(statusEvent) {
-  const insertId = await statusRepository.insertStatusEvent(statusEvent, toJsonValue(statusEvent.raw_payload));
+  const insertId = await statusRepository.insertStatusEvent(statusEvent);
 
   state.markLastMessageAt();
   state.setLastDeviceStatus({
