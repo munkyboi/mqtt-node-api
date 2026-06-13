@@ -1,0 +1,7 @@
+IoT /relay
+IoT /sensors
+IoT /status
+
+/relay = Arduino LED ON/OFF
+/sensors = DHT and water level, retained in MySQL for 5 minutes
+/status = device status

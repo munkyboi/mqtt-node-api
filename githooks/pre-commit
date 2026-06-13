@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+
+const { execSync } = require('child_process');
+
+const blockedPatterns = [
+  /^\.env$/,
+  /^\.env\..+$/,
+];
+
+const allowedFiles = new Set(['.env.example']);
+
+function getStagedFiles() {
+  const output = execSync('git diff --cached --name-only --diff-filter=ACMR', {
+    encoding: 'utf8',
+  }).trim();
+
+  return output ? output.split('\n').map((line) => line.trim()).filter(Boolean) : [];
+}
+
+const stagedFiles = getStagedFiles();
+const blockedFiles = stagedFiles.filter((file) => {
+  if (allowedFiles.has(file)) {
+    return false;
+  }
+
+  return blockedPatterns.some((pattern) => pattern.test(file));
+});
+
+if (blockedFiles.length > 0) {
+  console.error('Commit blocked: remove env files from staging first.');
+  for (const file of blockedFiles) {
+    console.error(`- ${file}`);
+  }
+  console.error('Run: git reset HEAD <file> or git restore --staged <file>');
+  process.exit(1);
+}
+
