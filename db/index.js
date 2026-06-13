@@ -32,11 +32,20 @@ async function indexExists(tableName, indexName) {
 }
 
 async function ensureSensorReadingColumns() {
-  if (!(await columnExists('sensor_readings', 'recorded_at'))) {
-    await pool.query(
-      `ALTER TABLE sensor_readings
-       ADD COLUMN recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`,
-    );
+  const sensorColumnDefinitions = {
+    temperature: 'DECIMAL(10, 2) NULL',
+    humidity: 'DECIMAL(10, 2) NULL',
+    water_level: 'DECIMAL(10, 2) NULL',
+    status: 'VARCHAR(100) NULL',
+    recorded_at: 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+  };
+
+  for (const [columnName, definition] of Object.entries(sensorColumnDefinitions)) {
+    if (!(await columnExists('sensor_readings', columnName))) {
+      await pool.query(
+        `ALTER TABLE sensor_readings ADD COLUMN ${columnName} ${definition}`,
+      );
+    }
   }
 
   if (await columnExists('sensor_readings', 'reading_at')) {
@@ -73,6 +82,20 @@ async function ensureSensorReadingColumns() {
 }
 
 async function ensureDeviceStatusColumns() {
+  const statusColumnDefinitions = {
+    status: 'VARCHAR(100) NOT NULL',
+    ip_address: 'VARCHAR(64) NULL',
+    updated_at: 'DATETIME NOT NULL',
+  };
+
+  for (const [columnName, definition] of Object.entries(statusColumnDefinitions)) {
+    if (!(await columnExists('device_status_events', columnName))) {
+      await pool.query(
+        `ALTER TABLE device_status_events ADD COLUMN ${columnName} ${definition}`,
+      );
+    }
+  }
+
   for (const columnName of ['topic', 'device_id', 'raw_payload']) {
     if (await columnExists('device_status_events', columnName)) {
       await pool.query(`ALTER TABLE device_status_events DROP COLUMN ${columnName}`);
